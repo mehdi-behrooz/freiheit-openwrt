@@ -1,0 +1,26 @@
+{
+    "inbounds": [
+
+        {
+            "tag": "transparent",
+            "protocol": "dokodemo-door",
+            "listen": "0.0.0.0",
+            "port": 1081,
+            "settings": {
+                "network": "tcp,udp",
+                "followRedirect": true
+            },
+            "sniffing": {
+                "enabled": true,
+                "destOverride": [ "http", "tls" ]
+            },
+            "streamSettings": {
+                "sockopt": {
+                    "tproxy": "tproxy"
+                }
+            }
+        }
+
+
+    ]
+}

@@ -1,0 +1,102 @@
+name: Build OpenWRT Packages
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - main
+
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-24.04
+
+    strategy:
+      matrix:
+        target: ["ipq40xx-generic", "ramips-mt7621"]
+        include:
+          - target: ipq40xx-generic # generates arm_cortex-a7_neon-vfpv4
+            sdk: https://archive.openwrt.org/releases/23.05.5/targets/ipq40xx/generic/openwrt-sdk-23.05.5-ipq40xx-generic_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz
+          - target: ramips-mt7621 # generates mipsel_24kc
+            sdk: https://archive.openwrt.org/releases/23.05.5/targets/ramips/mt7621/openwrt-sdk-23.05.5-ramips-mt7621_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          path: freiheit
+
+      - name: Install Build Essentials
+        run: |
+          sudo apt-get update
+          sudo apt install build-essential clang flex bison g++ gawk \
+            gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev \
+            python3-setuptools rsync swig unzip zlib1g-dev file wget
+
+      - name: Download OpenWRT SDK
+        run: |
+          wget -nv ${{ matrix.sdk }} -O sdk.tar.xz
+          tar -xaf sdk.tar.xz
+          rm sdk.tar.xz
+          mv openwrt-sdk-* openwrt/
+
+      - name: Create feed
+        run: |
+          echo "src-link freiheit $PWD/freiheit" >>openwrt/feeds.conf.default
+
+      - name: Update feed
+        working-directory: openwrt
+        run: |
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a -p freiheit
+
+      - name: Make OpenWRT config
+        working-directory: openwrt
+        run: |
+          make defconfig
+
+      - name: Build the package
+        working-directory: openwrt
+        run: |
+          make package/luci-app-freiheit/compile -j1 V=s
+
+      - name: Gather IPK files
+        run: |
+          mkdir artifacts/
+          mv openwrt/bin/packages/*/freiheit/*.ipk artifacts/
+
+      - name: Upload IPK files as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-${{ matrix.target }}
+          path: artifacts/*
+          compression-level: 0
+
+  release:
+
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: artifacts-*
+          path: release/
+          merge-multiple: true
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          body: "Release ${{ github.ref_name }}"
+          files: release/*

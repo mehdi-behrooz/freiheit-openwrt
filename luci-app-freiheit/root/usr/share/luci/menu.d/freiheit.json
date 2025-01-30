@@ -1,0 +1,77 @@
+{
+
+    "admin/services/": {
+        "title": "Services",
+        "order": 30,
+        "action": {
+            "type": "firstchild"
+        }
+    },
+
+    "admin/services/freiheit/": {
+        "title": "Freiheit",
+        "order": 31,
+        "action": {
+            "type": "alias",
+            "path": "admin/services/freiheit/status"
+        },
+        "depends": {
+            "acl": [ "luci-app-freiheit" ]
+        }
+    },
+
+    "admin/services/freiheit/status": {
+        "title": "Status",
+        "order": 32,
+        "action": {
+            "type": "view",
+            "path": "freiheit/status"
+        }
+    },
+
+    "admin/services/freiheit/subscriptions": {
+        "title": "Subscriptions",
+        "order": 33,
+        "action": {
+            "type": "view",
+            "path": "freiheit/subscriptions"
+        }
+    },
+
+    "admin/services/freiheit/nodes": {
+        "title": "Nodes",
+        "order": 34,
+        "action": {
+            "type": "view",
+            "path": "freiheit/nodes"
+        }
+    },
+
+    "admin/services/freiheit/routing": {
+        "title": "Routing",
+        "order": 35,
+        "action": {
+            "type": "view",
+            "path": "freiheit/routing"
+        }
+    },
+
+    "admin/services/freiheit/network": {
+        "title": "Network",
+        "order": 36,
+        "action": {
+            "type": "view",
+            "path": "freiheit/network"
+        }
+    },
+
+    "admin/services/freiheit/log": {
+        "title": "Log",
+        "order": 37,
+        "action": {
+            "type": "view",
+            "path": "freiheit/log"
+        }
+    }
+
+}

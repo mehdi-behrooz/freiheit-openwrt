@@ -1,0 +1,10 @@
+#!/bin/sh
+
+uci -q batch <<EOF
+    delete firewall.freiheit
+    set firewall.freiheit=include
+    set firewall.freiheit.type='nftables'
+    set firewall.freiheit.path='/etc/freiheit/nftables/main.nft'
+    set firewall.freiheit.position='ruleset-post'
+    commit firewall
+EOF

@@ -1,0 +1,28 @@
+config global 'global'
+    option active_node_id '00000000'
+    option default_routing 'proxy'
+
+config network 'network'
+    list interfaces 'br-guest'
+    list interfaces 'br-lan'
+
+config node
+    option id '00000000'
+    option remark 'freedom'
+    option type 'file'
+    option file '/etc/freiheit/xray/default/default.json'
+
+config route
+    option type ip
+    option content "ext:geoip_ir.dat:ir, ext:geoip_ir.dat:private"
+    option target direct
+
+config route
+    option type domain
+    option content "ext:geosite_ir.dat:ir"
+    option target direct
+
+config route
+    option type domain
+    option content "ext:geosite_ir.dat:category-ads-all"
+    option target block

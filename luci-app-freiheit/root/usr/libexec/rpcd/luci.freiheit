@@ -1,0 +1,139 @@
+#!/bin/sh
+
+. /lib/functions.sh
+. /usr/share/libubox/jshn.sh
+. /usr/share/freiheit/shell_util.sh
+. /usr/share/freiheit/rpcd_util.sh
+. /usr/share/freiheit/log.sh
+
+APP="usr/share/freiheit/app.sh"
+
+clear_logs() {
+    >$LOG_FILE
+    json_init
+    json_dump
+    json_cleanup
+}
+
+fetch_logs() {
+    log="$(tail -$1 $LOG_FILE)"
+    json_init
+    json_add_string 'log' "$log"
+    json_dump
+    json_cleanup
+}
+
+get_service_status() {
+    xray=$(pgrep 'xray' >/dev/null && echo "on" || echo "off")
+    freiheit=$(/etc/init.d/freiheit status >/dev/null && echo "on" || echo "off")
+    ip=$(curl -Ss4 -x "socks5://127.0.0.1:1080/" ip.sb 2>/dev/null)
+    nft="$(nft list table freiheit 2>/dev/null | grep tcp | grep -oE 'iifname "[^"]+"|ip saddr [^ ]+' | sed -E 's/iifname|ip saddr|"|\s//g' | tr '\n' ' ')"
+    starting="$($APP is_starting && echo "true" || echo "false")"
+    if $APP is_starting; then
+        [[ $xray == "off" ]] && xray=waiting
+        [[ $freiheit == "off" ]] && freiheit=waiting
+        [[ -z $ip ]] && ip=waiting
+        [[ -z $nft ]] && nft=waiting
+    fi
+    json_init
+    json_add_string 'freiheit' "$freiheit"
+    json_add_string 'xray' "$xray"
+    json_add_string 'ip' "$ip"
+    json_add_string 'nft' "$nft"
+    json_dump
+    json_cleanup
+}
+
+perform_service_init() {
+    log 'perform_service_init' "Executing /etc/init.d/freiheit $1 ..."
+    /etc/init.d/freiheit "$1"
+    json_init
+    json_add_string "success" "true"
+    json_dump
+    json_cleanup
+}
+
+delete_nodes() {
+    log 'delete_nodes' "Deleting nodes..."
+    config_load "freiheit"
+    config_foreach _delete_node_if_not_default node
+    uci commit freiheit
+    set_active_node "00000000"
+}
+
+_delete_node_if_not_default() {
+    config_get id $1 id
+    if [[ $id != "00000000" ]]; then
+        uci delete freiheit.$1
+    fi
+}
+
+download_subscriptions() {
+    log 'download_subscriptions' "Downloading subscriptions..."
+    config_load freiheit
+    config_foreach _download_subscription subscription
+    $APP check
+}
+
+_download_subscription() {
+    config_get name $1 name
+    config_get url $1 url
+    log 'download_subscriptions' "Downloading subscription '$name'..."
+    delete_count=$(config_foreach _remove_if_name node "$name" | wc -l)
+    if [[ $delete_count -gt 0 ]]; then
+        log 'download_subscriptions' "$delete_count duplicate nodes were deleted."
+    else
+        log 'download_subscriptions' "No duplicate nodes found."
+    fi
+    tmpdir=/tmp/freiheit/
+    mkdir -p $tmpdir
+    wget -q $url -O $tmpdir/subscription.base64
+    base64 -d $tmpdir/subscription.base64 >$tmpdir/subscription 2>/dev/null \
+        || cp $tmpdir/subscription.base64 $tmpdir/subscription
+    count=0
+    while IFS= read -r line && [[ -n "$line" ]]; do
+        id=$(short_uuid)
+        remark="$(echo $line | cut -d '#' -f2 | url_decode)"
+        uri="$(echo $line | cut -d '#' -f1)"
+        uci add freiheit node >/dev/null
+        uci set freiheit.@node[-1].id="$id"
+        uci set freiheit.@node[-1].remark="$remark"
+        uci set freiheit.@node[-1].type="uri"
+        uci set freiheit.@node[-1].uri="$line"
+        uci set freiheit.@node[-1].subscription="$name"
+        count=$((count + 1))
+    done < $tmpdir/subscription
+    rm -f $tmpdir/subscription.base64 $tmpdir/subscription
+    log 'download_subscriptions' "$count nodes added."
+    uci commit freiheit
+}
+
+_remove_if_name() {
+    config_get subscription $1 subscription
+    if [[ "$subscription" == "$2" ]]; then
+        uci delete freiheit.$1
+        echo "1"
+    fi
+}
+
+set_active_node() {
+    log 'set_active_node' "Setting active node to $1"
+    uci set freiheit.global.active_node_id="$1"
+    uci commit freiheit
+    log 'set_active_node' "Restarting the service..."
+    /etc/init.d/freiheit restart
+    json_init
+    json_add_string "success" "true"
+    json_dump
+    json_cleanup
+}
+
+define_method "clear_logs"
+define_method "fetch_logs" "n"
+define_method "get_service_status"
+define_method "perform_service_init" "action"
+define_method "delete_nodes"
+define_method "set_active_node" "id"
+define_method "download_subscriptions"
+
+run_methods $@

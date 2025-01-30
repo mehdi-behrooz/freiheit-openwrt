@@ -1,0 +1,64 @@
+.log {
+    height: 500px;
+    overflow: auto;
+}
+
+.log-container {
+    width: 100%;
+    position: relative;
+}
+
+.loading {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.cbi-value-textfield {
+    height: 30px;
+    line-height: 30px;
+}
+
+.auto-fade-out {
+    animation: fadeOut 500ms forwards;
+    animation-delay: 5s;
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+        display: none;
+    }
+}
+
+.modal.spinner {
+    display: table;
+    width: auto;
+    padding: 1em 3em;
+}
+
+.modal.spinner div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    font-size: medium;
+}
+
+tr.active-node {
+    background-color: antiquewhite;
+    border-left: 3px solid darkred;
+
+}
+
+input[disabled],
+button[disabled] {
+    opacity: 0.3;
+}

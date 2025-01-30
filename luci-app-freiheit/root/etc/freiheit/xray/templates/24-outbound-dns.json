@@ -1,0 +1,14 @@
+{
+    "outbounds": [
+        {
+            "tag": "dns-out",
+            "protocol": "dns",
+            "settings": {
+                "nonIPQuery": "skip"
+            },
+            "proxySettings": {
+                "tag": "proxy"
+            }
+        }
+    ]
+}

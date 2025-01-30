@@ -1,0 +1,13 @@
+{
+    "routing": {
+        "domainStrategy": "IPIfNonMatch",
+        "rules": [
+            {
+                "type": "field",
+                "inboundTag": [ "transparent" ],
+                "port": 53,
+                "outboundTag": "dns-out"
+            }
+        ]
+    }
+}

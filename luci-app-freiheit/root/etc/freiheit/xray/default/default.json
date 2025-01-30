@@ -1,0 +1,8 @@
+{
+    "outbounds": [
+        {
+            "tag": "freedom",
+            "protocol": "freedom"
+        }
+    ]
+}

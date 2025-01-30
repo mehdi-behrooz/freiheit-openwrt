@@ -1,0 +1,18 @@
+{
+    "luci-app-freiheit": {
+        "description": "Grant access to freiheit",
+        "read": {
+            "ubus": {
+                "luci.freiheit": [ "*" ]
+            },
+            "file": {
+                "/etc/freiheit/xray/uploads/*": [ "read", "write" ]
+            },
+            "uci": [ "freiheit" ]
+        },
+        "write": {
+            "uci": [ "freiheit" ]
+        }
+    }
+}
+
