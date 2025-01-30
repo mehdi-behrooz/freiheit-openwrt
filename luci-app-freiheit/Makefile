@@ -6,7 +6,7 @@ PKG_RELEASE:=1
 
 LUCI_TITLE:=LuCI Client for Freiheit Project
 LUCI_DEPENDS:=+xray-json-generator +xray-geosite-iran
-LUCI_EXTRA_DEPENDS:=xray-core, v2ray-geosite, moreutils, jq, kmod-nft-tproxy
+LUCI_EXTRA_DEPENDS:=xray-core, v2ray-geosite, moreutils, jq, kmod-nft-tproxy, coreutils-base64
 LUCI_PKGARCH:=all
 LUCI_MINIFY_JS:=1
 LUCI_MINIFY_CSS:=1
